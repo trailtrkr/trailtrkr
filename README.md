@@ -1,5 +1,5 @@
 # trailtrkr
 
-#Developer: Wright Ceresa, Sean Sikora
+# Developer: Wright Ceresa, Sean Sikora
 
 # Developer: William Allemang
