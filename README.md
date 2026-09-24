@@ -1,3 +1,3 @@
 # trailtrkr
 
-#Developer: Wright Ceresa
+#Developer: Wright Ceresa, Sean Sikora
