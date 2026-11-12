@@ -1,4 +1,4 @@
-﻿using Foundation;
+using Foundation;
 
 namespace TrailTrkr.App
 {
@@ -6,5 +6,10 @@ namespace TrailTrkr.App
     public class AppDelegate : MauiUIApplicationDelegate
     {
         protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+    }
+
+    [Register("MauiUISceneDelegate")]
+    public class SceneDelegate : MauiUISceneDelegate
+    {
     }
 }
