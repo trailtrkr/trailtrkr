@@ -12,7 +12,7 @@
 	- Asp.Net & Web Development
 	- .Net Maui mobile 
 3. Clone repository to local computer
-4. Visual studio -> Open Folder/Solution -> Choose top level /PeoplePlanner
+4. Visual studio -> Open Folder/Solution -> Choose top level /TrailTrkr
 
 ## Running Locally - Web & Mobile
 1. Select TrailTrkr.App or TrailTrkr.Web in the start up project drop down menu (top middle of toolbar, left of green play button)
