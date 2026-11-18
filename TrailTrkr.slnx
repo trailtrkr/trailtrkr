@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="TrailTrkr.Api/TrailTrkr.Api.csproj" />
+  <Project Path="TrailTrkr.App/TrailTrkr.App.csproj" />
+  <Project Path="TrailTrkr.Shared/TrailTrkr.Shared.csproj" />
+  <Project Path="TrailTrkr.Web/TrailTrkr.Web.csproj" />
+</Solution>

@@ -1,0 +1,8 @@
+<Router AppAssembly="typeof(MauiProgram).Assembly"
+        NotFoundPage="typeof(TrailTrkr.Shared.Components.Pages.NotFound)"
+        AdditionalAssemblies="new[] { typeof(TrailTrkr.Shared._Imports).Assembly }">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(TrailTrkr.Shared.Components.Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
