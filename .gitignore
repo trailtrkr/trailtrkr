@@ -73,6 +73,7 @@ ScaffoldingReadMe.txt
 *.aab
 *.ipa
 *.app
+!TrailTrkr.App/
 *.appx
 *.appxbundle
 *.msix

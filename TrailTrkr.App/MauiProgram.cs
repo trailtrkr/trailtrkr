@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using TrailTrkr.App.Services;
 
 namespace TrailTrkr.App
 {
@@ -15,6 +16,9 @@ namespace TrailTrkr.App
                 });
 
             builder.Services.AddMauiBlazorWebView();
+
+            // Register mobile application services (replace MockTrailService with API client when ready)
+            builder.Services.AddSingleton<ITrailService, MockTrailService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();
