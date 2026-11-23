@@ -1,0 +1,49 @@
+@page "/saved"
+@inject ITrailService TrailService
+@inject NavigationManager Navigation
+
+<PageTitle>Saved Trails • TrailTrkr</PageTitle>
+
+<section class="mobile-screen">
+    <div class="screen-header">
+        <h1>Saved Trails</h1>
+        <p>Quick access to your bookmarked routes and offline trail guides.</p>
+    </div>
+
+    @if (SavedList.Count == 0)
+    {
+        <div class="empty-state-card">
+            <h3>No Saved Trails Yet</h3>
+            <p>Tap the bookmark icon on any trail to save it here for quick trailhead access.</p>
+            <button type="button" class="btn-primary-mobile" @onclick='() => Navigation.NavigateTo("/")'>
+                Explore Trails
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="trail-list">
+            @foreach (var trail in SavedList)
+            {
+                <TrailCard Trail="trail"
+                           OnSelect="OpenTrailDetail"
+                           OnToggleSave="ToggleSave" />
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<Trail> SavedList =>
+        TrailService.GetTrails(savedOnly: true);
+
+    private void OpenTrailDetail(string trailId)
+    {
+        Navigation.NavigateTo($"/trail/{trailId}");
+    }
+
+    private void ToggleSave(string trailId)
+    {
+        TrailService.ToggleSaveTrail(trailId);
+    }
+}

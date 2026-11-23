@@ -1,0 +1,74 @@
+<article class="trail-card" @onclick="HandleSelect">
+    <div class="trail-card-header">
+        <div class="trail-badge-row">
+            <span class="badge-difficulty difficulty-@Trail.Difficulty.ToString().ToLowerInvariant()">
+                @Trail.Difficulty
+            </span>
+            <span class="badge-status status-@Trail.Status.ToString().ToLowerInvariant()">
+                ● @Trail.Status
+            </span>
+        </div>
+
+        <button type="button"
+                class="bookmark-btn @(Trail.IsSaved ? "saved" : "")"
+                title="@(Trail.IsSaved ? "Remove from Saved" : "Save Trail")"
+                @onclick:stopPropagation="true"
+                @onclick="HandleToggleSave">
+            <svg viewBox="0 0 24 24" width="18" height="18"
+                 fill="@(Trail.IsSaved ? "currentColor" : "none")"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+            </svg>
+        </button>
+    </div>
+
+    <h3 class="trail-card-title">@Trail.Name</h3>
+    <p class="trail-card-region">@Trail.ParkOrRegion</p>
+
+    <div class="trail-metrics-row">
+        <div class="metric-item">
+            <span class="metric-label">Distance</span>
+            <span class="metric-value">@Trail.DistanceMiles.ToString("0.0") mi</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+            <span class="metric-label">Elevation</span>
+            <span class="metric-value">+@Trail.ElevationGainFeet ft</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+            <span class="metric-label">Est. Time</span>
+            <span class="metric-value">@Trail.FormattedDuration</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+            <span class="metric-label">Rating</span>
+            <span class="metric-value">★ @Trail.Rating.ToString("0.0")</span>
+        </div>
+    </div>
+
+    @if (Trail.Tags.Count > 0)
+    {
+        <div class="trail-tags-row">
+            @foreach (var tag in Trail.Tags.Take(3))
+            {
+                <span class="trail-tag">@tag</span>
+            }
+        </div>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public Trail Trail { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<string> OnSelect { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnToggleSave { get; set; }
+
+    private Task HandleSelect() => OnSelect.InvokeAsync(Trail.Id);
+
+    private Task HandleToggleSave() => OnToggleSave.InvokeAsync(Trail.Id);
+}

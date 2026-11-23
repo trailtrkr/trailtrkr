@@ -1,0 +1,58 @@
+@implements IDisposable
+@inject ITrailService TrailService
+
+<nav class="mobile-bottom-nav" aria-label="Primary Mobile Navigation">
+    <NavLink class="bottom-nav-item" href="" Match="NavLinkMatch.All">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+        </svg>
+        <span>Explore</span>
+    </NavLink>
+
+    <NavLink class="bottom-nav-item" href="record">
+        <div class="nav-icon-wrapper">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="4" fill="currentColor"/>
+            </svg>
+            @if (TrailService.IsRecording)
+            {
+                <span class="nav-badge-dot"></span>
+            }
+        </div>
+        <span>Record</span>
+    </NavLink>
+
+    <NavLink class="bottom-nav-item" href="saved">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+        </svg>
+        <span>Saved</span>
+    </NavLink>
+
+    <NavLink class="bottom-nav-item" href="profile">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>Profile</span>
+    </NavLink>
+</nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        TrailService.OnStateChanged += HandleStateChanged;
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        TrailService.OnStateChanged -= HandleStateChanged;
+    }
+}

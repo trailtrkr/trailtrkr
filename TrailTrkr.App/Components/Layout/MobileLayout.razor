@@ -1,0 +1,57 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject ITrailService TrailService
+@inject NavigationManager Navigation
+
+<div class="mobile-shell">
+    <header class="mobile-topbar">
+        <div class="brand-group" @onclick='() => Navigation.NavigateTo("/")'>
+            <span class="brand-logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m8 3 4 8 5-5 5 15H2L8 3z"/>
+                </svg>
+            </span>
+            <div>
+                <div class="brand-title">TrailTrkr</div>
+                <div class="brand-subtitle">Field &amp; Trail Companion</div>
+            </div>
+        </div>
+
+        @if (TrailService.IsRecording && TrailService.ActiveHike is not null)
+        {
+            <button type="button" class="live-hike-pill" @onclick='() => Navigation.NavigateTo("/record")'>
+                <span class="pulse-dot @(TrailService.IsPaused ? "paused" : "")"></span>
+                <span>@(TrailService.IsPaused ? "PAUSED" : TrailService.ActiveHike.ElapsedTime.ToString(@"mm\:ss"))</span>
+            </button>
+        }
+        else
+        {
+            <span class="gps-badge" title="GPS Ready">
+                <span class="gps-dot"></span> GPS Ready
+            </span>
+        }
+    </header>
+
+    <main class="mobile-viewport">
+        @Body
+    </main>
+
+    <BottomNav />
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        TrailService.OnStateChanged += HandleStateChanged;
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        TrailService.OnStateChanged -= HandleStateChanged;
+    }
+}

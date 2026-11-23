@@ -1,0 +1,103 @@
+@page "/profile"
+@inject ITrailService TrailService
+@inject NavigationManager Navigation
+
+<PageTitle>Hiker Profile • TrailTrkr</PageTitle>
+
+<section class="mobile-screen">
+    <!-- Hiker Header Card -->
+    <div class="profile-header-card">
+        <div class="profile-avatar">TT</div>
+        <div class="profile-meta">
+            <h1>Trail Explorer</h1>
+            <p>Purdue TrailTrkr Mobile Member</p>
+        </div>
+    </div>
+
+    <!-- Lifetime Stats Grid -->
+    <div class="detail-stats-grid">
+        <div class="stat-tile">
+            <span class="stat-tile-label">Total Distance</span>
+            <span class="stat-tile-value">@TotalMiles.ToString("0.0") mi</span>
+        </div>
+        <div class="stat-tile">
+            <span class="stat-tile-label">Completed Hikes</span>
+            <span class="stat-tile-value">@Activities.Count</span>
+        </div>
+        <div class="stat-tile">
+            <span class="stat-tile-label">Elev. Climbed</span>
+            <span class="stat-tile-value">+@TotalElevation ft</span>
+        </div>
+        <div class="stat-tile">
+            <span class="stat-tile-label">Field Reports</span>
+            <span class="stat-tile-value">@Reports.Count</span>
+        </div>
+    </div>
+
+    <!-- Completed Hikes Log -->
+    <div class="content-card">
+        <div class="section-header-inline">
+            <h3>Recent Hikes</h3>
+            <span class="section-count">@Activities.Count</span>
+        </div>
+
+        @if (Activities.Count == 0)
+        {
+            <p class="muted-text">No recorded hikes yet. Start your first hike from the Record tab!</p>
+        }
+        else
+        {
+            <div class="activity-list">
+                @foreach (var act in Activities)
+                {
+                    <div class="activity-item">
+                        <div class="activity-item-top">
+                            <strong>@act.TrailName</strong>
+                            <span class="activity-date">@act.StartTime.ToString("MMM d")</span>
+                        </div>
+                        <div class="activity-metrics">
+                            <span>@act.DistanceMiles.ToString("0.00") mi</span>
+                            <span>•</span>
+                            <span>+@act.ElevationGainFeet ft</span>
+                            <span>•</span>
+                            <span>@act.ElapsedTime.ToString(@"hh\:mm\:ss")</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(act.Notes))
+                        {
+                            <p class="activity-notes">"@act.Notes"</p>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- App Preferences Boilerplate -->
+    <div class="content-card">
+        <h3>App Preferences</h3>
+
+        <label class="setting-row">
+            <div>
+                <div class="setting-title">Offline Trail Cache</div>
+                <div class="setting-subtitle">Keep saved trails available without cellular signal</div>
+            </div>
+            <input type="checkbox" @bind="TrailService.OfflineMapsEnabled" />
+        </label>
+
+        <label class="setting-row">
+            <div>
+                <div class="setting-title">Use Metric Units (km / m)</div>
+                <div class="setting-subtitle">Switch display from miles/feet to kilometers/meters</div>
+            </div>
+            <input type="checkbox" @bind="TrailService.UseMetricUnits" />
+        </label>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<TrailActivity> Activities => TrailService.GetActivityHistory();
+    private IReadOnlyList<TrailReport> Reports => TrailService.GetAllReports();
+
+    private double TotalMiles => Activities.Sum(a => a.DistanceMiles);
+    private int TotalElevation => Activities.Sum(a => a.ElevationGainFeet);
+}

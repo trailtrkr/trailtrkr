@@ -1,0 +1,252 @@
+@page "/trail/{Id}"
+@inject ITrailService TrailService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_trail?.Name ?? "Trail Details") • TrailTrkr</PageTitle>
+
+@if (_trail is null)
+{
+    <section class="mobile-screen">
+        <div class="empty-state-card">
+            <h3>Trail Not Found</h3>
+            <p>We couldn't find the requested trail.</p>
+            <button type="button" class="btn-primary-mobile" @onclick='() => Navigation.NavigateTo("/")'>
+                Back to Explore
+            </button>
+        </div>
+    </section>
+}
+else
+{
+    <section class="mobile-screen">
+        <!-- Top Navigation Bar for Detail View -->
+        <div class="detail-nav-row">
+            <button type="button" class="btn-icon-back" @onclick='() => Navigation.NavigateTo("/")'>
+                ← Back
+            </button>
+
+            <button type="button"
+                    class="btn-icon-action @(_trail.IsSaved ? "saved" : "")"
+                    @onclick="ToggleSave">
+                @(_trail.IsSaved ? "★ Saved" : "☆ Save Trail")
+            </button>
+        </div>
+
+        <!-- Hero Summary Card -->
+        <div class="detail-hero-card">
+            <div class="trail-badge-row">
+                <span class="badge-difficulty difficulty-@_trail.Difficulty.ToString().ToLowerInvariant()">
+                    @_trail.Difficulty
+                </span>
+                <span class="badge-status status-@_trail.Status.ToString().ToLowerInvariant()">
+                    ● @_trail.Status
+                </span>
+            </div>
+
+            <h1 class="detail-title">@_trail.Name</h1>
+            <p class="detail-region">@_trail.ParkOrRegion</p>
+
+            <!-- 4-Stat Grid -->
+            <div class="detail-stats-grid">
+                <div class="stat-tile">
+                    <span class="stat-tile-label">Distance</span>
+                    <span class="stat-tile-value">@_trail.DistanceMiles.ToString("0.0") mi</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-tile-label">Elev. Gain</span>
+                    <span class="stat-tile-value">+@_trail.ElevationGainFeet ft</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-tile-label">Est. Time</span>
+                    <span class="stat-tile-value">@_trail.FormattedDuration</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-tile-label">Rating</span>
+                    <span class="stat-tile-value">★ @_trail.Rating.ToString("0.0") (@_trail.ReviewCount)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Preview Boilerplate Placeholder -->
+        <div class="map-placeholder-card">
+            <div class="map-grid-overlay">
+                <svg class="map-route-svg" viewBox="0 0 240 90" fill="none">
+                    <path d="M 20 70 Q 70 15, 120 45 T 220 25" stroke="#2d6a4f" stroke-width="3.5" stroke-dasharray="6 4" stroke-linecap="round"/>
+                    <circle cx="20" cy="70" r="5" fill="#1b4332"/>
+                    <circle cx="220" cy="25" r="5" fill="#d97706"/>
+                </svg>
+                <div class="map-placeholder-meta">
+                    <span class="map-coords">Trailhead GPS: @_trail.Latitude.ToString("0.0000")° N, @Math.Abs(_trail.Longitude).ToString("0.0000")° W</span>
+                    <span class="map-hint">Map container placeholder (integrate MAUI Map / Mapbox / Leaflet here)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Primary Action Buttons -->
+        <div class="detail-actions-row">
+            <button type="button" class="btn-primary-mobile" @onclick="StartHikeOnTrail">
+                Start Hike on Trail
+            </button>
+            <button type="button" class="btn-secondary-mobile" @onclick="() => _showReportForm = !_showReportForm">
+                @(_showReportForm ? "Cancel Report" : "Report Condition")
+            </button>
+        </div>
+
+        <!-- Inline Trail Condition Report Form (End-user data collection -> Researcher Web Portal) -->
+        @if (_showReportForm)
+        {
+            <div class="report-form-card">
+                <h3>Submit Trail Condition Report</h3>
+                <p class="report-form-subtitle">Reports help fellow hikers and park researchers track trail health.</p>
+
+                <div class="form-group-mobile">
+                    <label>Issue / Category</label>
+                    <select class="form-input-mobile" @bind="_newReportCategory">
+                        <option value="Muddy / Wet Trail">Muddy / Wet Trail</option>
+                        <option value="Downed Tree / Obstacle">Downed Tree / Obstacle</option>
+                        <option value="High Water / Flooding">High Water / Flooding</option>
+                        <option value="Signage / Marker Issue">Signage / Marker Issue</option>
+                        <option value="Wildlife Sighting">Wildlife Sighting</option>
+                    </select>
+                </div>
+
+                <div class="form-group-mobile">
+                    <label>Severity</label>
+                    <select class="form-input-mobile" @bind="_newReportSeverity">
+                        <option value="Low">Low (Passable)</option>
+                        <option value="Medium">Medium (Use Caution)</option>
+                        <option value="High">High (Impassable / Hazard)</option>
+                    </select>
+                </div>
+
+                <div class="form-group-mobile">
+                    <label>Field Notes</label>
+                    <textarea class="form-input-mobile" rows="3"
+                              placeholder="Describe location or condition details..."
+                              @bind="_newReportNotes"></textarea>
+                </div>
+
+                <button type="button" class="btn-primary-mobile" @onclick="SubmitConditionReport">
+                    Submit Field Report
+                </button>
+            </div>
+        }
+
+        @if (_reportSubmittedBanner)
+        {
+            <div class="alert-success-mobile">
+                ✓ Trail condition report saved!
+            </div>
+        }
+
+        <!-- Overview & Tags -->
+        <div class="content-card">
+            <h3>Trail Overview</h3>
+            <p class="trail-description">@_trail.Description</p>
+
+            <div class="trail-tags-row">
+                @foreach (var tag in _trail.Tags)
+                {
+                    <span class="trail-tag">@tag</span>
+                }
+            </div>
+        </div>
+
+        <!-- Recent Trail Reports -->
+        <div class="content-card">
+            <div class="section-header-inline">
+                <h3>Recent Field Reports</h3>
+                <span class="section-count">@_trailReports.Count</span>
+            </div>
+
+            @if (_trailReports.Count == 0)
+            {
+                <p class="muted-text">No recent hazards or condition alerts reported for this trail.</p>
+            }
+            else
+            {
+                <div class="report-list">
+                    @foreach (var report in _trailReports)
+                    {
+                        <div class="report-item">
+                            <div class="report-item-header">
+                                <span class="report-category">@report.Category</span>
+                                <span class="report-severity severity-@report.Severity.ToLowerInvariant()">@report.Severity</span>
+                            </div>
+                            <p class="report-notes">@report.Notes</p>
+                            <span class="report-time">@report.CreatedAt.ToString("MMM d, h:mm tt")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    private Trail? _trail;
+    private IReadOnlyList<TrailReport> _trailReports = [];
+    private bool _showReportForm;
+    private bool _reportSubmittedBanner;
+    private string _newReportCategory = "Muddy / Wet Trail";
+    private string _newReportSeverity = "Medium";
+    private string _newReportNotes = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        LoadTrail();
+    }
+
+    private void LoadTrail()
+    {
+        _trail = TrailService.GetTrailById(Id);
+        if (_trail is not null)
+        {
+            _trailReports = TrailService.GetReportsForTrail(_trail.Id);
+        }
+    }
+
+    private void ToggleSave()
+    {
+        if (_trail is not null)
+        {
+            TrailService.ToggleSaveTrail(_trail.Id);
+            LoadTrail();
+        }
+    }
+
+    private void StartHikeOnTrail()
+    {
+        if (_trail is not null)
+        {
+            Navigation.NavigateTo($"/record?trailId={_trail.Id}");
+        }
+    }
+
+    private void SubmitConditionReport()
+    {
+        if (_trail is null)
+        {
+            return;
+        }
+
+        TrailService.SubmitReport(new TrailReport
+        {
+            TrailId = _trail.Id,
+            TrailName = _trail.Name,
+            Category = _newReportCategory,
+            Severity = _newReportSeverity,
+            Notes = string.IsNullOrWhiteSpace(_newReportNotes)
+                ? $"Reported {_newReportCategory.ToLowerInvariant()} on trail."
+                : _newReportNotes.Trim()
+        });
+
+        _newReportNotes = string.Empty;
+        _showReportForm = false;
+        _reportSubmittedBanner = true;
+        LoadTrail();
+    }
+}

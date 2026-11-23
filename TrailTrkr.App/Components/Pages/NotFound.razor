@@ -1,0 +1,12 @@
+@page "/not-found"
+@inject NavigationManager Navigation
+
+<section class="mobile-screen">
+    <div class="empty-state-card">
+        <h3>Off the Trail</h3>
+        <p>The screen you are looking for doesn't exist.</p>
+        <button type="button" class="btn-primary-mobile" @onclick='() => Navigation.NavigateTo("/")'>
+            Return to Explore
+        </button>
+    </div>
+</section>

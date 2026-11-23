@@ -1,0 +1,115 @@
+@page "/"
+@inject ITrailService TrailService
+@inject NavigationManager Navigation
+
+<PageTitle>Explore Trails • TrailTrkr</PageTitle>
+
+<section class="mobile-screen">
+    <!-- Hero / Welcome Banner -->
+    <div class="explore-hero">
+        <div class="explore-hero-text">
+            <h1>Find Your Next Trail</h1>
+            <p>Discover local routes, track hikes, and share live trail conditions.</p>
+        </div>
+        <button type="button" class="btn-quick-record" @onclick='() => Navigation.NavigateTo("/record")'>
+            @(TrailService.IsRecording ? "Resume Active Hike" : "Start Free Hike")
+        </button>
+    </div>
+
+    <!-- Search Input -->
+    <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="search"
+               class="search-input"
+               placeholder="Search trails, parks, or tags..."
+               @bind="_searchQuery"
+               @bind:event="oninput" />
+        @if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            <button type="button" class="search-clear-btn" @onclick="ClearSearch">✕</button>
+        }
+    </div>
+
+    <!-- Difficulty Filter Chips -->
+    <div class="filter-chip-row" role="tablist" aria-label="Filter by difficulty">
+        <button type="button"
+                class="filter-chip @(_selectedDifficulty is null ? "active" : "")"
+                @onclick="() => SetDifficulty(null)">
+            All (@TrailService.GetTrails(_searchQuery, null).Count)
+        </button>
+        @foreach (var diff in Enum.GetValues<TrailDifficulty>())
+        {
+            <button type="button"
+                    class="filter-chip @(_selectedDifficulty == diff ? "active" : "")"
+                    @onclick="() => SetDifficulty(diff)">
+                @diff
+            </button>
+        }
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+        <h2>Nearby Trails</h2>
+        <span class="section-count">@FilteredTrails.Count @(FilteredTrails.Count == 1 ? "trail" : "trails")</span>
+    </div>
+
+    <!-- Trail Cards List -->
+    @if (FilteredTrails.Count == 0)
+    {
+        <div class="empty-state-card">
+            <h3>No matching trails</h3>
+            <p>Try clearing your search or selecting a different difficulty filter.</p>
+            <button type="button" class="btn-secondary-mobile" @onclick="ResetFilters">
+                Reset Filters
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="trail-list">
+            @foreach (var trail in FilteredTrails)
+            {
+                <TrailCard Trail="trail"
+                           OnSelect="OpenTrailDetail"
+                           OnToggleSave="ToggleSave" />
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private string _searchQuery = string.Empty;
+    private TrailDifficulty? _selectedDifficulty;
+
+    private IReadOnlyList<Trail> FilteredTrails =>
+        TrailService.GetTrails(_searchQuery, _selectedDifficulty);
+
+    private void SetDifficulty(TrailDifficulty? difficulty)
+    {
+        _selectedDifficulty = difficulty;
+    }
+
+    private void ClearSearch()
+    {
+        _searchQuery = string.Empty;
+    }
+
+    private void ResetFilters()
+    {
+        _searchQuery = string.Empty;
+        _selectedDifficulty = null;
+    }
+
+    private void OpenTrailDetail(string trailId)
+    {
+        Navigation.NavigateTo($"/trail/{trailId}");
+    }
+
+    private void ToggleSave(string trailId)
+    {
+        TrailService.ToggleSaveTrail(trailId);
+    }
+}

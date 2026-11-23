@@ -1,0 +1,190 @@
+@page "/record"
+@implements IDisposable
+@inject ITrailService TrailService
+@inject NavigationManager Navigation
+
+<PageTitle>Record Hike • TrailTrkr</PageTitle>
+
+<section class="mobile-screen">
+    <div class="screen-header">
+        <h1>Trail Recorder</h1>
+        <p>Track your route, pace, and elevation in real time.</p>
+    </div>
+
+    <!-- Trail Selection (when idle) -->
+    @if (!TrailService.IsRecording)
+    {
+        <div class="content-card">
+            <div class="form-group-mobile">
+                <label for="trail-select">Select Trail (or Free Hike)</label>
+                <select id="trail-select" class="form-input-mobile" @bind="_selectedTrailId">
+                    <option value="">Free GPS Hike (No preset trail)</option>
+                    @foreach (var trail in _allTrails)
+                    {
+                        <option value="@trail.Id">@trail.Name (@trail.DistanceMiles.ToString("0.0") mi)</option>
+                    }
+                </select>
+            </div>
+        </div>
+    }
+    else if (TrailService.ActiveHike is not null)
+    {
+        <div class="active-trail-banner">
+            <span class="active-trail-label">ACTIVE ROUTE</span>
+            <strong class="active-trail-name">@TrailService.ActiveHike.TrailName</strong>
+        </div>
+    }
+
+    <!-- Live GPS Telemetry / Map Viewport Placeholder -->
+    <div class="recorder-map-card @(TrailService.IsRecording && !TrailService.IsPaused ? "recording-active" : "")">
+        <div class="recorder-status-bar">
+            <span class="status-indicator">
+                <span class="pulse-dot @(!TrailService.IsRecording ? "idle" : TrailService.IsPaused ? "paused" : "")"></span>
+                @(!TrailService.IsRecording ? "GPS Standby" : TrailService.IsPaused ? "Recording Paused" : "Recording GPS Track")
+            </span>
+            <span class="coords-pill">40.4237° N, 86.9212° W</span>
+        </div>
+
+        <div class="recorder-timer-display">
+            @(TrailService.ActiveHike?.ElapsedTime.ToString(@"hh\:mm\:ss") ?? "00:00:00")
+        </div>
+        <div class="recorder-timer-caption">Elapsed Duration</div>
+    </div>
+
+    <!-- Live Telemetry 3-Column Metrics -->
+    <div class="telemetry-grid">
+        <div class="telemetry-card">
+            <span class="telemetry-label">Distance</span>
+            <span class="telemetry-value">@((TrailService.ActiveHike?.DistanceMiles ?? 0.0).ToString("0.00"))</span>
+            <span class="telemetry-unit">miles</span>
+        </div>
+        <div class="telemetry-card">
+            <span class="telemetry-label">Elev. Gain</span>
+            <span class="telemetry-value">+@(TrailService.ActiveHike?.ElevationGainFeet ?? 0)</span>
+            <span class="telemetry-unit">feet</span>
+        </div>
+        <div class="telemetry-card">
+            <span class="telemetry-label">Avg Pace</span>
+            <span class="telemetry-value">@(TrailService.ActiveHike?.FormattedPace ?? "--:-- /mi")</span>
+            <span class="telemetry-unit">pace</span>
+        </div>
+    </div>
+
+    <!-- Recorder Controls -->
+    @if (!TrailService.IsRecording)
+    {
+        <button type="button" class="btn-record-start" @onclick="StartRecording">
+            ● Start Hike Recording
+        </button>
+    }
+    else
+    {
+        <div class="form-group-mobile">
+            <label for="hike-notes">Field Notes (optional)</label>
+            <input id="hike-notes"
+                   type="text"
+                   class="form-input-mobile"
+                   placeholder="Add trail observations or weather notes..."
+                   @bind="_hikeNotes" />
+        </div>
+
+        <div class="recorder-controls-row">
+            @if (TrailService.IsPaused)
+            {
+                <button type="button" class="btn-primary-mobile" @onclick="ResumeRecording">
+                    ▶ Resume
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn-secondary-mobile" @onclick="PauseRecording">
+                    ❚❚ Pause
+                </button>
+            }
+
+            <button type="button" class="btn-danger-mobile" @onclick="FinishAndSave">
+                ■ Finish &amp; Save
+            </button>
+        </div>
+    }
+
+    @if (_lastSavedHike is not null)
+    {
+        <div class="alert-success-mobile">
+            <div>
+                <strong>Hike Saved!</strong> @_lastSavedHike.TrailName — @_lastSavedHike.DistanceMiles.ToString("0.00") mi in @_lastSavedHike.ElapsedTime.ToString(@"mm\:ss").
+            </div>
+            <button type="button" class="btn-link-inline" @onclick='() => Navigation.NavigateTo("/profile")'>
+                View in Profile →
+            </button>
+        </div>
+    }
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "trailId")]
+    public string? QueryTrailId { get; set; }
+
+    private IReadOnlyList<Trail> _allTrails = [];
+    private string? _selectedTrailId;
+    private string _hikeNotes = string.Empty;
+    private TrailActivity? _lastSavedHike;
+    private Timer? _simulationTimer;
+
+    protected override void OnInitialized()
+    {
+        _allTrails = TrailService.GetTrails();
+        TrailService.OnStateChanged += HandleStateChanged;
+
+        // Boilerplate timer simulating 1-second GPS ticks while a hike is actively recording.
+        // Replace with Microsoft.Maui.Devices.Sensors.Geolocation polling when wiring device hardware.
+        _simulationTimer = new Timer(_ =>
+        {
+            if (TrailService.IsRecording && !TrailService.IsPaused)
+            {
+                TrailService.SimulateHikeStep();
+            }
+        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(QueryTrailId) && !TrailService.IsRecording)
+        {
+            _selectedTrailId = QueryTrailId;
+        }
+    }
+
+    private void StartRecording()
+    {
+        _lastSavedHike = null;
+        TrailService.StartHike(_selectedTrailId);
+    }
+
+    private void PauseRecording()
+    {
+        TrailService.PauseHike();
+    }
+
+    private void ResumeRecording()
+    {
+        TrailService.ResumeHike();
+    }
+
+    private void FinishAndSave()
+    {
+        _lastSavedHike = TrailService.FinishHike(_hikeNotes);
+        _hikeNotes = string.Empty;
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        TrailService.OnStateChanged -= HandleStateChanged;
+        _simulationTimer?.Dispose();
+    }
+}
