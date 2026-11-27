@@ -103,6 +103,16 @@ appsettings.*.local.json
 .env.local
 secrets.json
 
+# Database certificates / private keys
+*.pem
+*.key
+*.crt
+*.cer
+
+# Local database certificate directories / archives
+certs/
+WrightCerts.zip
+
 # OS files
 .DS_Store
 Thumbs.db
